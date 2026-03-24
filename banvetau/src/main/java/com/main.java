@@ -12,9 +12,6 @@ public class main {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Hệ thống quản lý bán vé ga tàu - Đăng nhập");
             
-            // ========================================================
-            // ĐÂY CHÍNH LÀ DÒNG BẠN CÒN THIẾU: Khởi tạo đối tượng login
-            // ========================================================
             GUI_Login loginPanel = new GUI_Login(); 
             
             loginPanel.setParentFrame(frame);

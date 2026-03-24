@@ -3,8 +3,8 @@ package com.entities;
 public class Ga {
 	private String maGa;
 	private String tenGa;
-	private String moTa; 
-	
+	private String diaChi;
+
 	public String getMaGa() {
 		return maGa;
 	}
@@ -17,12 +17,22 @@ public class Ga {
 	public void setTenGa(String tenGa) {
 		this.tenGa = tenGa;
 	}
-	public String getMoTa() {
-		return moTa;
+	public String getDiaChi() {
+		return diaChi;
 	}
-	public void setMoTa(String moTa) {
-		this.moTa = moTa;
+	public void setDiaChi(String diaChi) {
+		this.diaChi = diaChi;
 	}
-	
-	
+	public Ga(String maGa, String tenGa, String diaChi) {
+		super();
+		this.maGa = maGa;
+		this.tenGa = tenGa;
+		this.diaChi = diaChi;
+	}
+	public Ga() {
+		super();
+	}
+
+
+
 }

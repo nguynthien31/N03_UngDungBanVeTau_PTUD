@@ -1,6 +1,8 @@
 package com.gui;
 
 import javax.swing.*;
+
+import com.gui.GUI_NhanVien.TAB_QLNhanVien;
 import com.service.TabStyler;
 import java.awt.*;
 
@@ -18,6 +20,7 @@ public class GUI_General extends JPanel {
     private TAB_QLKhachHang tab_QLKhachHang;
     private TAB_KhuyenMai tab_KhuyenMai;
     private TAB_ThongKeDoanhThu tab_ThongKeDoanhThu;
+    private TAB_ThongKeVe tab_ThongKeVe;
     
     private JPanel contentPanel;
     private JPanel currentTabPanel;
@@ -44,6 +47,7 @@ public class GUI_General extends JPanel {
         tab_QLKhachHang = new TAB_QLKhachHang();
         tab_KhuyenMai = new TAB_KhuyenMai();
         tab_ThongKeDoanhThu = new TAB_ThongKeDoanhThu();
+        tab_ThongKeVe = new TAB_ThongKeVe();
 
         // ================= 1. SIDEBAR PANEL (NẰM TRỌN BÊN TRÁI) =================
         JPanel sidebarPanel = new JPanel();
@@ -71,7 +75,6 @@ public class GUI_General extends JPanel {
         JLabel lblAppName = new JLabel("Hệ thống quản lý bán vé ga tàu");
         lblAppName.setFont(TabStyler.HEADER_FONT);
         lblAppName.setForeground(Color.BLUE);
-        // Đã xóa dòng "lblAppName.setBorder(...)" vì cấu trúc mới đã tự căn chỉnh chuẩn xác
 
         headerPanel.add(lblAppName, BorderLayout.WEST);
 
@@ -91,12 +94,10 @@ public class GUI_General extends JPanel {
 
         JLabel lblHello = new JLabel("Xin chào!");
         lblHello.setFont(TabStyler.CONTENT_FONT);
-        lblHello.setForeground(Color.WHITE); 
-        // Lưu ý: Nền header đang là màu trắng, chữ "Xin chào" màu TRẮNG sẽ bị tàng hình. 
-        // Bạn nên cân nhắc đổi lại thành Color.BLACK hoặc Color.BLUE nhé!
+        lblHello.setForeground(Color.BLUE);
 
         headerRight.add(lblHello);
-        headerRight.add(Box.createHorizontalStrut(15));
+        headerRight.add(Box.createHorizontalStrut(30));
         headerRight.add(btnExit);
 
         headerPanel.add(headerRight, BorderLayout.EAST);
@@ -254,6 +255,10 @@ public class GUI_General extends JPanel {
         	JButton btnDoanhThu = createSubTabButton("Thống kê doanh thu");
             btnDoanhThu.addActionListener(e -> showTab(tab_ThongKeDoanhThu));
             subMenuPanel.add(btnDoanhThu);
+
+            JButton btnVe = createSubTabButton("Thống kê vé");
+            btnVe.addActionListener(e -> showTab(tab_ThongKeVe));
+            subMenuPanel.add(btnVe);
         }
 
         // 4. Bắt sự kiện click cho nút cha để Đóng/Mở subMenuPanel
@@ -275,7 +280,7 @@ public class GUI_General extends JPanel {
     // Hàm hỗ trợ tạo giao diện cho nút con (sub-menu)
     private JButton createSubTabButton(String text) {
         // Thụt lề text vào trong một chút để tạo cảm giác cấp bậc (hierarchy)
-        JButton button = new JButton("" + text); 
+        JButton button = new JButton(text);
         button.setFont(TabStyler.CONTENT_FONT);
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.setMaximumSize(new Dimension(250, 40));

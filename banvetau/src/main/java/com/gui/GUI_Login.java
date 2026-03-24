@@ -1,18 +1,22 @@
 package com.gui;
 
-import com.entities.NhanVien;
 import com.service.TabStyler;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.*;
 
-public class GUI_Login extends JPanel {
+public class GUI_Login extends JPanel implements ActionListener, MouseListener {
 
     private JFrame parentFrame;
     private JTextField txtUsername;
     private JPasswordField txtPassword;
     private JButton btnLogin;
+
+    // ===== THÊM LABEL LỖI =====
+    private JLabel lblUserError;
+    private JLabel lblPassError;
 
     public GUI_Login() {
 
@@ -41,20 +45,42 @@ public class GUI_Login extends JPanel {
 
         GridBagConstraints gc = new GridBagConstraints();
         gc.gridx = 0;
-        gc.insets = new Insets(10, 0, 10, 0);
+        gc.insets = new Insets(5, 0, 5, 0);
         gc.anchor = GridBagConstraints.WEST;
 
         JLabel lblTitle = new JLabel("Đăng nhập");
         lblTitle.setFont(TabStyler.HEADER_FONT);
 
-        JLabel lblUser = new JLabel("Username (Bỏ qua)");
+        JLabel lblUser = new JLabel("Username");
         txtUsername = new JTextField(22);
 
-        JLabel lblPass = new JLabel("Password (Bỏ qua)");
+        JLabel lblPass = new JLabel("Password");
         txtPassword = new JPasswordField(22);
 
-        // Enter vào ô pass cũng kích hoạt nút login
+        // ===== LABEL LỖI =====
+        lblUserError = new JLabel(" ");
+        lblUserError.setForeground(Color.RED);
+        lblUserError.setFont(new Font("Arial", Font.ITALIC, 12));
+
+        lblPassError = new JLabel(" ");
+        lblPassError.setForeground(Color.RED);
+        lblPassError.setFont(new Font("Arial", Font.ITALIC, 12));
+
+        // Enter = login
         txtPassword.addActionListener(e -> btnLogin.doClick());
+
+        // Clear lỗi khi nhập lại
+        txtUsername.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent e) {
+                lblUserError.setText(" ");
+            }
+        });
+
+        txtPassword.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent e) {
+                lblPassError.setText(" ");
+            }
+        });
 
         btnLogin = new JButton("Đăng nhập");
         btnLogin.setFont(TabStyler.SECTION_FONT);
@@ -64,14 +90,16 @@ public class GUI_Login extends JPanel {
         btnLogin.setPreferredSize(new Dimension(200, 38));
         btnLogin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // CHỈNH SỬA Ở ĐÂY: Bấm nút là gọi thẳng hàm mở cửa sổ mới
-        btnLogin.addActionListener(e -> handleLoginBypass());
+        btnLogin.addActionListener(e -> handleLogin());
 
+        // ===== ADD COMPONENT =====
         gc.gridy = 0;    right.add(lblTitle, gc);
         gc.gridy++;      right.add(lblUser, gc);
         gc.gridy++;      right.add(txtUsername, gc);
+        gc.gridy++;      right.add(lblUserError, gc);
         gc.gridy++;      right.add(lblPass, gc);
         gc.gridy++;      right.add(txtPassword, gc);
+        gc.gridy++;      right.add(lblPassError, gc);
 
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         row.setBackground(Color.WHITE);
@@ -88,18 +116,41 @@ public class GUI_Login extends JPanel {
         this.parentFrame = f;
     }
 
- // Hàm login bỏ qua mọi bước kiểm tra database
-    private void handleLoginBypass() {
-        // Gửi thông báo nhỏ cho vui
-        JOptionPane.showMessageDialog(this,
-                "Đã bỏ qua đăng nhập. Đang vào hệ thống...",
-                "Chế độ Test", JOptionPane.INFORMATION_MESSAGE);
+    // ===== HÀM LOGIN CHÍNH =====
+    private void handleLogin() {
+        String username = txtUsername.getText().trim();
+        String password = new String(txtPassword.getPassword()).trim();
 
-        // Gọi hàm mở cửa sổ (Không cần truyền nv vào nữa)
+        boolean isValid = true;
+
+        // reset lỗi
+        lblUserError.setText(" ");
+        lblPassError.setText(" ");
+
+        // check username
+        if (username.isEmpty()) {
+            lblUserError.setText("Username không được để trống");
+            isValid = false;
+        } else if (!username.equals("admin")) {
+            lblUserError.setText("Sai username");
+            isValid = false;
+        }
+
+        // check password
+        if (password.isEmpty()) {
+            lblPassError.setText("Password không được để trống");
+            isValid = false;
+        } else if (!password.equals("123")) {
+            lblPassError.setText("Sai password");
+            isValid = false;
+        }
+
+        if (!isValid) return;
+
+        // đúng thì vào hệ thống
         openMainWindow();
     }
 
-    // Đã xóa tham số (NhanVien nv) ở đây
     private void openMainWindow() {
         if (parentFrame == null) {
             Window w = SwingUtilities.getWindowAncestor(this);
@@ -108,25 +159,17 @@ public class GUI_Login extends JPanel {
 
         SwingUtilities.invokeLater(() -> {
             JFrame f = new JFrame("Hệ thống quản lý bán vé ga tàu");
-            
-            // ĐÃ SỬA Ở ĐÂY: Xóa chữ nv đi, chỉ còn GUI_General()
-            f.setContentPane(new GUI_General()); 
-            
+            f.setContentPane(new GUI_General());
             f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            f.setExtendedState(JFrame.MAXIMIZED_BOTH); // Full màn hình
-            f.setResizable(true); 
+            f.setExtendedState(JFrame.MAXIMIZED_BOTH);
             f.setVisible(true);
 
-            // Tắt cửa sổ Login cũ đi
             if (parentFrame != null) {
                 parentFrame.dispose();
             }
         });
     }
 
-    // ==========================================
-    // Hàm Main để bạn chạy thử giao diện Login này
-    // ==========================================
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("KVStore - Đăng nhập");
@@ -140,4 +183,11 @@ public class GUI_Login extends JPanel {
             frame.setVisible(true);
         });
     }
+
+    @Override public void mouseClicked(MouseEvent e) {}
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
+    @Override public void actionPerformed(ActionEvent e) {}
 }

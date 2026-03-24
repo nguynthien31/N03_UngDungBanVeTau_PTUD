@@ -46,7 +46,8 @@ public final class TabStyler {
         if (component == null) {
             return;
         }
-        if (component instanceof JComponent jComponent) {
+        if (component instanceof JComponent) {
+            JComponent jComponent = (JComponent) component;
             Object flag = jComponent.getClientProperty(HEADER_PROPERTY);
             if (Boolean.TRUE.equals(flag)) {
                 return;
@@ -56,7 +57,8 @@ public final class TabStyler {
         if (font == null || font instanceof FontUIResource) {
             component.setFont(CONTENT_FONT);
         }
-        if (component instanceof Container container) {
+        if (component instanceof Container) {
+            Container container = (Container) component;
             for (Component child : container.getComponents()) {
                 applyContentFont(child);
             }

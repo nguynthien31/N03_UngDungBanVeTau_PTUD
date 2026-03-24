@@ -7,6 +7,17 @@ public class Tau {
 	private String tenTau;
 	private int soToa;
 	private TrangThaiTau trangThaiTau;
+
+	public Tau() {
+		super();
+	}
+	public Tau(String maTau, String tenTau, int soToa, TrangThaiTau trangThaiTau) {
+		super();
+		this.maTau = maTau;
+		this.tenTau = tenTau;
+		this.soToa = soToa;
+		this.trangThaiTau = trangThaiTau;
+	}
 	public String getMaTau() {
 		return maTau;
 	}
@@ -36,7 +47,7 @@ public class Tau {
 		return "Tau [maTau=" + maTau + ", tenTau=" + tenTau + ", soToa=" + soToa + ", trangThaiTau=" + trangThaiTau
 				+ "]";
 	}
-	
-	
-	
+
+
+
 }
