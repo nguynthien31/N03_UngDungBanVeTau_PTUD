@@ -1,193 +1,297 @@
 package com.gui;
 
 import com.service.TabStyler;
+import com.dao.DAO_NhanVien;
+import com.entities.NhanVien;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-public class GUI_Login extends JPanel implements ActionListener, MouseListener {
+public class GUI_Login extends JPanel implements ActionListener {
 
-    private JFrame parentFrame;
-    private JTextField txtUsername;
-    private JPasswordField txtPassword;
-    private JButton btnLogin;
+	private JFrame parentFrame;
+	private JTextField txtUsername;
+	private JPasswordField txtPassword;
+	private JButton btnLogin;
 
-    // ===== THÊM LABEL LỖI =====
-    private JLabel lblUserError;
-    private JLabel lblPassError;
+	private DAO_NhanVien nv_dao = new DAO_NhanVien();
 
-    public GUI_Login() {
+	private JLabel lblUserError;
+	private JLabel lblPassError;
+	private Image backgroundImage;
 
-        setLayout(new BorderLayout());
+	private int failedAttempts = 0;
+	private boolean isPermanentlyLocked = false;
+	private Timer countdownTimer;
 
-        // ================= LEFT IMAGE =================
-        JPanel left = new JPanel(new BorderLayout());
-        left.setPreferredSize(new Dimension(520, 600));
-        left.setBackground(new Color(245, 247, 255));
+	public GUI_Login() {
+		try {
+			java.net.URL imgURL = getClass().getResource("/com/img/doantau.png");
+			if (imgURL != null) {
+				backgroundImage = new ImageIcon(imgURL).getImage();
+			}
+		} catch (Exception e) {
+			System.err.println("Không tìm thấy ảnh: /com/img/doantau.png");
+		}
 
-        try {
-            ImageIcon icon = new ImageIcon("src/main/resources/login_img.png");
-            Image img = icon.getImage().getScaledInstance(420, 420, Image.SCALE_SMOOTH);
-            JLabel lbImg = new JLabel(new ImageIcon(img));
-            lbImg.setHorizontalAlignment(SwingConstants.CENTER);
-            lbImg.setBorder(new EmptyBorder(40, 0, 40, 0));
-            left.add(lbImg, BorderLayout.CENTER);
-        } catch (Exception e) {
-            left.add(new JLabel("Image not found", SwingConstants.CENTER), BorderLayout.CENTER);
-        }
+		setLayout(new GridBagLayout());
 
-        // ================= RIGHT FORM =================
-        JPanel right = new JPanel(new GridBagLayout());
-        right.setBackground(Color.WHITE);
-        right.setBorder(new EmptyBorder(40, 50, 40, 50));
+		JPanel loginPanel = new JPanel(new GridBagLayout()) {
+			@Override
+			protected void paintComponent(Graphics g) {
+				Graphics2D g2d = (Graphics2D) g;
+				g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g2d.setColor(new Color(0, 0, 0, 190));
+				g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30);
+				super.paintComponent(g);
+			}
+		};
+		loginPanel.setOpaque(false);
+		loginPanel.setPreferredSize(new Dimension(420, 520));
+		loginPanel.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        GridBagConstraints gc = new GridBagConstraints();
-        gc.gridx = 0;
-        gc.insets = new Insets(5, 0, 5, 0);
-        gc.anchor = GridBagConstraints.WEST;
+		GridBagConstraints gc = new GridBagConstraints();
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		gc.insets = new Insets(5, 0, 5, 0);
+		gc.gridx = 0;
 
-        JLabel lblTitle = new JLabel("Đăng nhập");
-        lblTitle.setFont(TabStyler.HEADER_FONT);
+		JLabel lblApp = new JLabel("GA TÀU SÀI GÒN", SwingConstants.CENTER);
+		lblApp.setFont(new Font("SansSerif", Font.BOLD, 26));
+		lblApp.setForeground(new Color(255, 193, 7));
 
-        JLabel lblUser = new JLabel("Username");
-        txtUsername = new JTextField(22);
+		JLabel lblLoginNow = new JLabel("LOGIN NOW", SwingConstants.CENTER);
+		lblLoginNow.setFont(new Font("SansSerif", Font.PLAIN, 14));
+		lblLoginNow.setForeground(Color.WHITE);
 
-        JLabel lblPass = new JLabel("Password");
-        txtPassword = new JPasswordField(22);
+		txtUsername = createStyledTextField();
+		txtPassword = createStyledPasswordField();
+		lblUserError = createErrorLabel();
+		lblPassError = createErrorLabel();
 
-        // ===== LABEL LỖI =====
-        lblUserError = new JLabel(" ");
-        lblUserError.setForeground(Color.RED);
-        lblUserError.setFont(new Font("Arial", Font.ITALIC, 12));
+		// ================= TIỆN ÍCH KIỂM TRA USERNAME NGAY LẬP TỨC =================
+		txtUsername.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				String user = txtUsername.getText().trim();
+				if (user.isEmpty()) {
+					lblUserError.setText("Username không được để trống!");
+					updateFieldBorder(txtUsername, Color.RED);
+				} else if (!nv_dao.isIdExists(user)) { // Kiểm tra sự tồn tại trong DB
+					lblUserError.setText("Tài khoản này không tồn tại!");
+					lblUserError.setForeground(new Color(255, 110, 110));
+					updateFieldBorder(txtUsername, Color.RED);
+				} else {
+					lblUserError.setText("Tài khoản hợp lệ.");
+					lblUserError.setForeground(new Color(100, 255, 100));
+					updateFieldBorder(txtUsername, new Color(100, 255, 100));
+				}
+			}
+		});
 
-        lblPassError = new JLabel(" ");
-        lblPassError.setForeground(Color.RED);
-        lblPassError.setFont(new Font("Arial", Font.ITALIC, 12));
+		// Xóa thông báo lỗi khi bắt đầu gõ lại
+		txtUsername.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				lblUserError.setText(" ");
+				updateFieldBorder(txtUsername, new Color(255, 193, 7));
+			}
+		});
 
-        // Enter = login
-        txtPassword.addActionListener(e -> btnLogin.doClick());
+		btnLogin = new JButton("ĐĂNG NHẬP");
+		styleButton(btnLogin);
+		btnLogin.addActionListener(e -> handleLogin());
 
-        // Clear lỗi khi nhập lại
-        txtUsername.addKeyListener(new KeyAdapter() {
-            public void keyTyped(KeyEvent e) {
-                lblUserError.setText(" ");
-            }
-        });
+		txtUsername.addActionListener(e -> txtPassword.requestFocus());
+		txtPassword.addActionListener(e -> btnLogin.doClick());
 
-        txtPassword.addKeyListener(new KeyAdapter() {
-            public void keyTyped(KeyEvent e) {
-                lblPassError.setText(" ");
-            }
-        });
+		gc.gridy = 0;
+		loginPanel.add(lblApp, gc);
+		gc.gridy = 1;
+		gc.insets = new Insets(0, 0, 30, 0);
+		loginPanel.add(lblLoginNow, gc);
 
-        btnLogin = new JButton("Đăng nhập");
-        btnLogin.setFont(TabStyler.SECTION_FONT);
-        btnLogin.setBackground(new Color(0, 122, 255));
-        btnLogin.setForeground(Color.WHITE);
-        btnLogin.setFocusPainted(false);
-        btnLogin.setPreferredSize(new Dimension(200, 38));
-        btnLogin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		gc.gridy = 2;
+		gc.insets = new Insets(5, 0, 2, 0);
+		JLabel uLabel = new JLabel("Username");
+		uLabel.setForeground(Color.LIGHT_GRAY);
+		loginPanel.add(uLabel, gc);
+		gc.gridy = 3;
+		loginPanel.add(txtUsername, gc);
+		gc.gridy = 4;
+		loginPanel.add(lblUserError, gc);
 
-        btnLogin.addActionListener(e -> handleLogin());
+		gc.gridy = 5;
+		JLabel pLabel = new JLabel("Password");
+		pLabel.setForeground(Color.LIGHT_GRAY);
+		loginPanel.add(pLabel, gc);
+		gc.gridy = 6;
+		loginPanel.add(txtPassword, gc);
+		gc.gridy = 7;
+		loginPanel.add(lblPassError, gc);
 
-        // ===== ADD COMPONENT =====
-        gc.gridy = 0;    right.add(lblTitle, gc);
-        gc.gridy++;      right.add(lblUser, gc);
-        gc.gridy++;      right.add(txtUsername, gc);
-        gc.gridy++;      right.add(lblUserError, gc);
-        gc.gridy++;      right.add(lblPass, gc);
-        gc.gridy++;      right.add(txtPassword, gc);
-        gc.gridy++;      right.add(lblPassError, gc);
+		gc.gridy = 8;
+		gc.insets = new Insets(20, 0, 10, 0);
+		loginPanel.add(btnLogin, gc);
 
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        row.setBackground(Color.WHITE);
-        row.add(btnLogin);
+		add(loginPanel);
+	}
 
-        gc.gridy++;
-        right.add(row, gc);
+	private void handleLogin() {
+		if (isPermanentlyLocked) {
+			showPermanentLockAlert();
+			return;
+		}
 
-        add(left, BorderLayout.WEST);
-        add(right, BorderLayout.EAST);
-    }
+		String username = txtUsername.getText().trim();
+		String password = new String(txtPassword.getPassword()).trim();
 
-    public void setParentFrame(JFrame f) {
-        this.parentFrame = f;
-    }
+		// Kiểm tra trống khi bấm nút
+		if (username.isEmpty()) {
+			lblUserError.setText("Username không được để trống!");
+			txtUsername.requestFocus();
+			return;
+		}
+		if (password.isEmpty()) {
+			lblPassError.setText("Password không được để trống!");
+			txtPassword.requestFocus();
+			return;
+		}
 
-    // ===== HÀM LOGIN CHÍNH =====
-    private void handleLogin() {
-        String username = txtUsername.getText().trim();
-        String password = new String(txtPassword.getPassword()).trim();
+		if (nv_dao.checkLogin(username, password)) {
+			NhanVien nv = nv_dao.getNhanVienById(username); // Giả sử DAO có hàm lấy NV theo ID
+			failedAttempts = 0;
+			openMainWindow(nv);
+		}
+	}
 
-        boolean isValid = true;
+	// Các hàm xử lý Khóa và Timer giữ nguyên như cũ
+	private void processFailedAttempt() {
+		if (failedAttempts == 3) {
+			JOptionPane.showMessageDialog(this, "Sai 3 lần! Hệ thống sẽ khóa tạm thời 5 phút.", "Cảnh báo",
+					JOptionPane.WARNING_MESSAGE);
+			startCountdown(5);
+		} else if (failedAttempts >= 6) {
+			isPermanentlyLocked = true;
+			if (countdownTimer != null)
+				countdownTimer.stop();
+			showPermanentLockAlert();
+		} else {
+			lblPassError.setText("Sai tài khoản hoặc mật khẩu! (Lần " + failedAttempts + ")");
+			txtPassword.setText("");
+			txtPassword.requestFocus();
+		}
+	}
 
-        // reset lỗi
-        lblUserError.setText(" ");
-        lblPassError.setText(" ");
+	private void startCountdown(int minutes) {
+		btnLogin.setEnabled(false);
+		txtUsername.setEditable(false);
+		txtPassword.setEditable(false);
+		final int[] secondsLeft = { minutes * 60 };
+		countdownTimer = new Timer(1000, e -> {
+			secondsLeft[0]--;
+			if (secondsLeft[0] > 0) {
+				int m = secondsLeft[0] / 60;
+				int s = secondsLeft[0] % 60;
+				btnLogin.setText(String.format("Thử lại sau (%02d:%02d)", m, s));
+			} else {
+				((Timer) e.getSource()).stop();
+				btnLogin.setEnabled(true);
+				btnLogin.setText("ĐĂNG NHẬP");
+				txtUsername.setEditable(true);
+				txtPassword.setEditable(true);
+				lblPassError.setText(" ");
+			}
+		});
+		countdownTimer.start();
+	}
 
-        // check username
-        if (username.isEmpty()) {
-            lblUserError.setText("Username không được để trống");
-            isValid = false;
-        } else if (!username.equals("admin")) {
-            lblUserError.setText("Sai username");
-            isValid = false;
-        }
+	private void showPermanentLockAlert() {
+		JOptionPane.showMessageDialog(this,
+				"Màn hình đã bị khóa vĩnh viễn!\nHãy liên hệ quản lý để được mở khóa.\nSĐT: 0859495852",
+				"KHÓA HỆ THỐNG", JOptionPane.ERROR_MESSAGE);
+		txtUsername.setEnabled(false);
+		txtPassword.setEnabled(false);
+		btnLogin.setEnabled(false);
+	}
 
-        // check password
-        if (password.isEmpty()) {
-            lblPassError.setText("Password không được để trống");
-            isValid = false;
-        } else if (!password.equals("123")) {
-            lblPassError.setText("Sai password");
-            isValid = false;
-        }
+	// Hàm Helper để cập nhật Border nhanh
+	private void updateFieldBorder(JTextField field, Color color) {
+		field.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(color, 1),
+				BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+	}
 
-        if (!isValid) return;
+	private JTextField createStyledTextField() {
+		JTextField tf = new JTextField(15);
+		tf.setBackground(new Color(255, 255, 255, 240));
+		updateFieldBorder(tf, new Color(255, 193, 7));
+		return tf;
+	}
 
-        // đúng thì vào hệ thống
-        openMainWindow();
-    }
+	private JPasswordField createStyledPasswordField() {
+		JPasswordField pf = new JPasswordField(15);
+		pf.setBackground(new Color(255, 255, 255, 240));
+		updateFieldBorder(pf, new Color(255, 193, 7));
+		return pf;
+	}
 
-    private void openMainWindow() {
-        if (parentFrame == null) {
-            Window w = SwingUtilities.getWindowAncestor(this);
-            if (w instanceof JFrame) parentFrame = (JFrame) w;
-        }
+	private JLabel createErrorLabel() {
+		JLabel lbl = new JLabel(" ");
+		lbl.setForeground(new Color(255, 100, 100));
+		lbl.setFont(new Font("Arial", Font.ITALIC, 12));
+		return lbl;
+	}
 
-        SwingUtilities.invokeLater(() -> {
-            JFrame f = new JFrame("Hệ thống quản lý bán vé ga tàu");
-            f.setContentPane(new GUI_General());
-            f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            f.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            f.setVisible(true);
+	private void styleButton(JButton btn) {
+		btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+		btn.setBackground(new Color(255, 193, 7));
+		btn.setForeground(Color.BLACK);
+		btn.setFocusPainted(false);
+		btn.setBorderPainted(false);
+		btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btn.setPreferredSize(new Dimension(0, 45));
+	}
 
-            if (parentFrame != null) {
-                parentFrame.dispose();
-            }
-        });
-    }
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		if (backgroundImage != null) {
+			g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+			g.setColor(new Color(0, 0, 0, 60));
+			g.fillRect(0, 0, getWidth(), getHeight());
+		}
+	}
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("KVStore - Đăng nhập");
-            GUI_Login loginPanel = new GUI_Login();
-            loginPanel.setParentFrame(frame);
-            frame.setContentPane(loginPanel);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setResizable(false);
-            frame.setVisible(true);
-        });
-    }
+	private void openMainWindow(NhanVien nv) {
+		Window w = SwingUtilities.getWindowAncestor(this);
+		SwingUtilities.invokeLater(() -> {
+			JFrame f = new JFrame("Hệ thống quản lý bán vé ga tàu");
+			f.setContentPane(new GUI_General(nv)); // Truyền nhân viên vào đây
+			f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			f.setExtendedState(JFrame.MAXIMIZED_BOTH);
+			f.setVisible(true);
+			if (w instanceof JFrame)
+				w.dispose();
+		});
+	}
 
-    @Override public void mouseClicked(MouseEvent e) {}
-    @Override public void mousePressed(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e) {}
-    @Override public void actionPerformed(ActionEvent e) {}
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			JFrame frame = new JFrame("Ga Tàu Sài Gòn - Đăng nhập");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.setSize(1000, 700);
+			frame.setContentPane(new GUI_Login());
+			frame.setLocationRelativeTo(null);
+			frame.setVisible(true);
+		});
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+	}
+
+	public void setParentFrame(JFrame frame) {
+		this.parentFrame = frame;
+	}
 }
