@@ -139,31 +139,37 @@ public class GUI_Login extends JPanel implements ActionListener {
 	}
 
 	private void handleLogin() {
-		if (isPermanentlyLocked) {
-			showPermanentLockAlert();
-			return;
-		}
+	    if (isPermanentlyLocked) {
+	        showPermanentLockAlert();
+	        return;
+	    }
 
-		String username = txtUsername.getText().trim();
-		String password = new String(txtPassword.getPassword()).trim();
+	    String username = txtUsername.getText().trim();
+	    String password = new String(txtPassword.getPassword()).trim();
 
-		// Kiểm tra trống khi bấm nút
-		if (username.isEmpty()) {
-			lblUserError.setText("Username không được để trống!");
-			txtUsername.requestFocus();
-			return;
-		}
-		if (password.isEmpty()) {
-			lblPassError.setText("Password không được để trống!");
-			txtPassword.requestFocus();
-			return;
-		}
+	    // 1. Kiểm tra trống
+	    if (username.isEmpty()) {
+	        lblUserError.setText("Username không được để trống!");
+	        txtUsername.requestFocus();
+	        return;
+	    }
+	    if (password.isEmpty()) {
+	        lblPassError.setText("Password không được để trống!");
+	        txtPassword.requestFocus();
+	        return;
+	    }
 
-		if (nv_dao.checkLogin(username, password)) {
-			NhanVien nv = nv_dao.getNhanVienById(username); // Giả sử DAO có hàm lấy NV theo ID
-			failedAttempts = 0;
-			openMainWindow(nv);
-		}
+	    // 2. Xử lý logic Đăng nhập
+	    if (nv_dao.checkLogin(username, password)) {
+	        // ĐĂNG NHẬP THÀNH CÔNG
+	        NhanVien nv = nv_dao.getNhanVienById(username); 
+	        failedAttempts = 0; // Reset số lần sai
+	        openMainWindow(nv);
+	    } else {
+	        // ĐĂNG NHẬP THẤT BẠI (Đây là phần bạn đang thiếu)
+	        failedAttempts++; // Tăng số lần thử sai
+	        processFailedAttempt(); // Gọi hàm xử lý thông báo lỗi/khóa
+	    }
 	}
 
 	// Các hàm xử lý Khóa và Timer giữ nguyên như cũ
