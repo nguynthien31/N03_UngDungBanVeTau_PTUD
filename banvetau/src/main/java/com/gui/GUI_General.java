@@ -42,7 +42,7 @@ public class GUI_General extends JPanel {
 		tab_Dashboard = new TAB_Dashboard();
 		tab_BanVe = new TAB_BanVe();
 		tab_HoanVe = new TAB_HoanVe();
-		tab_ThanhToanLapHD = new TAB_ThanhToanLapHD("");
+		tab_ThanhToanLapHD = new TAB_ThanhToanLapHD();
 		tab_Tau = new TAB_Tau();
 		tab_Toa_ChoNgoi = new TAB_Toa_ChoNgoi();
 		tab_Ga_Tuyen = new TAB_Ga_Tuyen();
