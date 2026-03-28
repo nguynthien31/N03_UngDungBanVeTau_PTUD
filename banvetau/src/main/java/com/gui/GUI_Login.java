@@ -71,25 +71,33 @@ public class GUI_Login extends JPanel implements ActionListener {
 		lblPassError = createErrorLabel();
 
 		// ================= TIỆN ÍCH KIỂM TRA USERNAME NGAY LẬP TỨC =================
-		txtUsername.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusLost(FocusEvent e) {
-				String user = txtUsername.getText().trim();
-				if (user.isEmpty()) {
-					lblUserError.setText("Username không được để trống!");
-					updateFieldBorder(txtUsername, Color.RED);
-				} else if (!nv_dao.isIdExists(user)) { // Kiểm tra sự tồn tại trong DB
-					lblUserError.setText("Tài khoản này không tồn tại!");
-					lblUserError.setForeground(new Color(255, 110, 110));
-					updateFieldBorder(txtUsername, Color.RED);
-				} else {
-					lblUserError.setText("Tài khoản hợp lệ.");
-					lblUserError.setForeground(new Color(100, 255, 100));
-					updateFieldBorder(txtUsername, new Color(100, 255, 100));
-				}
-			}
-		});
+		txtUsername.addKeyListener(new KeyAdapter() {
+		    @Override
+		    public void keyReleased(KeyEvent e) {
+		        String user = txtUsername.getText().trim();
+		        
+		        // Nếu ô trống thì hiện nhắc nhở bình thường
+		        if (user.isEmpty()) {
+		            lblUserError.setText("Username không được để trống!");
+		            updateFieldBorder(txtUsername, Color.RED);
+		            return;
+		        }
 
+		        // Kiểm tra trực tiếp trong DB khi đang gõ
+		        // Lưu ý: Chỉ nên kiểm tra khi độ dài User đủ lớn (ví dụ > 3 ký tự) để tránh truy vấn DB quá nhiều
+		        if (user.length() >= 3) { 
+		            if (!nv_dao.isIdExists(user)) {
+		                lblUserError.setText("Tài khoản này không tồn tại!");
+		                lblUserError.setForeground(new Color(255, 110, 110));
+		                updateFieldBorder(txtUsername, Color.RED);
+		            } else {
+		                lblUserError.setText("Tài khoản hợp lệ.");
+		                lblUserError.setForeground(new Color(100, 255, 100));
+		                updateFieldBorder(txtUsername, new Color(100, 255, 100));
+		            }
+		        }
+		    }
+		});
 		// Xóa thông báo lỗi khi bắt đầu gõ lại
 		txtUsername.addKeyListener(new KeyAdapter() {
 			@Override
@@ -139,31 +147,52 @@ public class GUI_Login extends JPanel implements ActionListener {
 	}
 
 	private void handleLogin() {
-		if (isPermanentlyLocked) {
-			showPermanentLockAlert();
-			return;
-		}
+	    // 1. Kiểm tra trạng thái khóa hệ thống trước tiên
+	    if (isPermanentlyLocked) {
+	        showPermanentLockAlert();
+	        return;
+	    }
 
-		String username = txtUsername.getText().trim();
-		String password = new String(txtPassword.getPassword()).trim();
+	    String username = txtUsername.getText().trim();
+	    String password = new String(txtPassword.getPassword()).trim();
 
-		// Kiểm tra trống khi bấm nút
-		if (username.isEmpty()) {
-			lblUserError.setText("Username không được để trống!");
-			txtUsername.requestFocus();
-			return;
-		}
-		if (password.isEmpty()) {
-			lblPassError.setText("Password không được để trống!");
-			txtPassword.requestFocus();
-			return;
-		}
+	    // 2. Kiểm tra các trường để trống (Validation)
+	    if (username.isEmpty()) {
+	        lblUserError.setText("Username không được để trống!");
+	        updateFieldBorder(txtUsername, Color.RED);
+	        txtUsername.requestFocus();
+	        return;
+	    }
+	    
+	    if (password.isEmpty()) {
+	        lblPassError.setText("Password không được để trống!");
+	        updateFieldBorder(txtPassword, Color.RED);
+	        txtPassword.requestFocus();
+	        return;
+	    }
 
-		if (nv_dao.checkLogin(username, password)) {
-			NhanVien nv = nv_dao.getNhanVienById(username); // Giả sử DAO có hàm lấy NV theo ID
-			failedAttempts = 0;
-			openMainWindow(nv);
-		}
+	    // 3. Kiểm tra nhãn lỗi ID (Nếu focusLost hoặc KeyListener đã báo lỗi trước đó)
+	    // Điều này ngăn chặn việc gửi yêu cầu đăng nhập khi ID chắc chắn sai
+	    if (lblUserError.getText().equals("Tài khoản này không tồn tại!")) {
+	        txtUsername.requestFocus();
+	        return;
+	    }
+
+	    // 4. Thực hiện xác thực với Database
+	    if (nv_dao.checkLogin(username, password)) {
+	        // ĐĂNG NHẬP THÀNH CÔNG
+	        NhanVien nv = nv_dao.getNhanVienById(username); 
+	        failedAttempts = 0; // Reset số lần sai về 0
+	        
+	        // Hiển thị thông báo chào mừng nhẹ nhàng nếu muốn
+	        // JOptionPane.showMessageDialog(this, "Chào mừng " + nv.getTenNV() + " quay trở lại!");
+	        
+	        openMainWindow(nv);
+	    } else {
+	        // ĐĂNG NHẬP THẤT BẠI
+	        failedAttempts++; // Tăng số lần thử sai
+	        processFailedAttempt(); // Gọi hàm xử lý thông báo lỗi hoặc đếm ngược khóa
+	    }
 	}
 
 	// Các hàm xử lý Khóa và Timer giữ nguyên như cũ
