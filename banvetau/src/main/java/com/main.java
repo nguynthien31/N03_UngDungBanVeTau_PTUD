@@ -1,10 +1,8 @@
 package com;
 
-import com.connectDB.ConnectDB;
 import com.gui.GUI_Login; // Bắt buộc phải Import cái này để lấy code từ thư mục gui
 
 import javax.swing.*;
-import java.sql.SQLException;
 
 public class main {
     public static void main(String[] args) {
