@@ -9,297 +9,280 @@ import java.awt.*;
 import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.io.FileOutputStream;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.FontFactory;
 
 public class TAB_ThanhToanLapHD extends JPanel {
-    private JTextField txtMaHDMoi, txtTenKHMoi, txtTongTienMoi, txtKhuyenMaiMoi;
-    private DefaultTableModel modelVeChoThanhToan, modelLichSu;
-    private JTable tableVeChoThanhToan, tableLichSu;
-    private JButton btnXacNhan;
+    private DefaultTableModel modelHD, modelCT;
+    private JTable tableHD, tableCT;
     private JComboBox<Object> cbNhanVienLoc;
     private JDateChooser dateLoc;
     private JTextField txtTimKiemMaHD;
 
+    private JLabel lblMaHDVal, lblNgayLapVal, lblNhanVienVal, lblKhachHangVal, lblKhuyenMaiVal, lblTongTienVal;
+    private String currentMaHD = "";
+
     private DecimalFormat df = new DecimalFormat("#,### VNĐ");
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
-    public TAB_ThanhToanLapHD(String maHDInitial) {
-        setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
+    public TAB_ThanhToanLapHD() {
+        setLayout(new BorderLayout(10, 10));
+        setBackground(new Color(240, 240, 240));
 
-        JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        mainSplit.setDividerLocation(550);
-        mainSplit.setDividerSize(8);
+        // --- PANEL PHÍA BẮC: TIÊU ĐỀ VÀ BỘ LỌC ---
+        JPanel pnlNorth = new JPanel(new BorderLayout());
+        pnlNorth.setOpaque(false);
 
-        mainSplit.setLeftComponent(createPanelThanhToan());
-        mainSplit.setRightComponent(createPanelLichSu());
+        JLabel lblPageTitle = new JLabel("THANH TOÁN VÀ LẬP HÓA ĐƠN", JLabel.CENTER);
+        lblPageTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblPageTitle.setForeground(new Color(0, 51, 153));
+        lblPageTitle.setBorder(new EmptyBorder(10, 0, 10, 0));
 
-        add(mainSplit, BorderLayout.CENTER);
-        
+        pnlNorth.add(lblPageTitle, BorderLayout.NORTH);
+        pnlNorth.add(createPanelFilter(), BorderLayout.CENTER);
+
+        add(pnlNorth, BorderLayout.NORTH);
+
+        // --- PHẦN THÂN: DANH SÁCH VÀ CHI TIẾT ---
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(450);
+        splitPane.setLeftComponent(createPanelDanhSachHoaDon());
+        splitPane.setRightComponent(createPanelChiTietDayDu());
+
+        add(splitPane, BorderLayout.CENTER);
+
         loadNhanVienToCombo();
-        locLichSu();
-
-        if (maHDInitial != null && !maHDInitial.isEmpty()) {
-            loadDuLieuThanhToanMoi(maHDInitial);
-        }
+        loadDauSachHoaDon();
     }
 
-    private JPanel createPanelThanhToan() {
-        JPanel pnl = new JPanel(new BorderLayout(10, 10));
-        pnl.setBorder(new TitledBorder(new LineBorder(Color.BLUE), "XỬ LÝ THANH TOÁN MỚI"));
-        pnl.setBackground(Color.WHITE);
-
-        JPanel pnlInfo = new JPanel(new GridLayout(4, 2, 10, 10));
-        pnlInfo.setBackground(Color.WHITE);
-        pnlInfo.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        pnlInfo.add(new JLabel("Mã Hóa Đơn:"));
-        txtMaHDMoi = new JTextField(); txtMaHDMoi.setEditable(false);
-        pnlInfo.add(txtMaHDMoi);
-
-        pnlInfo.add(new JLabel("Khách hàng:"));
-        txtTenKHMoi = new JTextField(); txtTenKHMoi.setEditable(false);
-        pnlInfo.add(txtTenKHMoi);
-
-        pnlInfo.add(new JLabel("Khuyến mãi:"));
-        txtKhuyenMaiMoi = new JTextField(); txtKhuyenMaiMoi.setEditable(false);
-        pnlInfo.add(txtKhuyenMaiMoi);
-
-        modelVeChoThanhToan = new DefaultTableModel(new String[]{"Mã Vé", "Loại Vé", "Giá Tiền"}, 0);
-        tableVeChoThanhToan = new JTable(modelVeChoThanhToan);
+    private JPanel createPanelFilter() {
+        JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        pnl.setBorder(new TitledBorder("Bộ lọc nhanh"));
         
-        JPanel pnlSouth = new JPanel(new BorderLayout());
-        txtTongTienMoi = new JTextField("0 VNĐ");
-        txtTongTienMoi.setFont(new Font("Arial", Font.BOLD, 22));
-        txtTongTienMoi.setForeground(Color.RED);
-        txtTongTienMoi.setHorizontalAlignment(JTextField.RIGHT);
-        txtTongTienMoi.setEditable(false);
-        
-        btnXacNhan = new JButton("XÁC NHẬN & IN HÓA ĐƠN");
-        btnXacNhan.setBackground(new Color(0, 120, 215));
-        btnXacNhan.setForeground(Color.WHITE);
-        btnXacNhan.setPreferredSize(new Dimension(0, 50));
-        btnXacNhan.setEnabled(false);
-        btnXacNhan.addActionListener(e -> thanhToanThanhCong());
-
-        pnlSouth.add(txtTongTienMoi, BorderLayout.NORTH);
-        pnlSouth.add(btnXacNhan, BorderLayout.SOUTH);
-
-        pnl.add(pnlInfo, BorderLayout.NORTH);
-        pnl.add(new JScrollPane(tableVeChoThanhToan), BorderLayout.CENTER);
-        pnl.add(pnlSouth, BorderLayout.SOUTH);
-
-        return pnl;
-    }
-
-    private JPanel createPanelLichSu() {
-        JPanel pnl = new JPanel(new BorderLayout(5, 5));
-        pnl.setBorder(new TitledBorder("LỊCH SỬ GIAO DỊCH"));
-
-        // Bộ lọc
-        JPanel pnlFilter = new JPanel(new GridLayout(3, 2, 5, 5));
-        pnlFilter.add(new JLabel(" Tìm Mã HD:"));
-        txtTimKiemMaHD = new JTextField();
+        txtTimKiemMaHD = new JTextField(10);
         txtTimKiemMaHD.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent e) { locLichSu(); }
+            public void keyReleased(java.awt.event.KeyEvent e) { loadDauSachHoaDon(); }
         });
-        pnlFilter.add(txtTimKiemMaHD);
-
-        pnlFilter.add(new JLabel(" Nhân viên:"));
         cbNhanVienLoc = new JComboBox<>();
-        cbNhanVienLoc.addActionListener(e -> locLichSu());
-        pnlFilter.add(cbNhanVienLoc);
-
-        pnlFilter.add(new JLabel(" Ngày lập:"));
+        cbNhanVienLoc.addActionListener(e -> loadDauSachHoaDon());
         dateLoc = new JDateChooser();
-        dateLoc.addPropertyChangeListener("date", e -> locLichSu());
-        pnlFilter.add(dateLoc);
-
-        // Bảng lịch sử - KHÓA CHỈNH SỬA
-        modelLichSu = new DefaultTableModel(new String[]{"Mã HD", "Ngày lập", "Tổng tiền"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Không cho phép sửa bất kỳ ô nào
-            }
-        };
-        tableLichSu = new JTable(modelLichSu);
-        tableLichSu.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tableLichSu.getTableHeader().setReorderingAllowed(false); // Không cho kéo đổi cột
-
-        // SỰ KIỆN DOUBLE CLICK
-        tableLichSu.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int row = tableLichSu.getSelectedRow();
-                    if (row != -1) {
-                        String maHD = tableLichSu.getValueAt(row, 0).toString();
-                        hienThiChiTietInLai(maHD);
-                    }
-                }
-            }
-        });
-
-        pnl.add(pnlFilter, BorderLayout.NORTH);
-        pnl.add(new JScrollPane(tableLichSu), BorderLayout.CENTER);
-        pnl.add(new JLabel(" (*) Nhấp đúp để xem chi tiết và in lại", JLabel.CENTER), BorderLayout.SOUTH);
-
+        dateLoc.setPreferredSize(new Dimension(120, 25));
+        dateLoc.addPropertyChangeListener("date", e -> loadDauSachHoaDon());
+        
+        pnl.add(new JLabel("Mã HD:")); pnl.add(txtTimKiemMaHD);
+        pnl.add(new JLabel("Nhân viên:")); pnl.add(cbNhanVienLoc);
+        pnl.add(new JLabel("Ngày:")); pnl.add(dateLoc);
         return pnl;
     }
 
-    private void hienThiChiTietInLai(String maHD) {
-        JDialog dlg = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết hóa đơn", true);
-        dlg.setSize(450, 600);
-        dlg.setLocationRelativeTo(this);
-
-        JTextArea area = new JTextArea();
-        area.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        area.setEditable(false);
-        area.setMargin(new Insets(10, 10, 10, 10));
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("        HÓA ĐƠN\n");
-        sb.append("           GA ĐƯỜNG SẮT Việt Nam\n");
-        sb.append("==========================================\n");
-
-        try (Connection con = ConnectDB.getConnection()) {
-            // 1. Lấy thông tin Master
-            String sql = "SELECT h.*, n.tenNV, k.tenKH FROM HoaDon h " +
-                         "JOIN NhanVien n ON h.maNV = n.maNV " +
-                         "JOIN KhachHang k ON h.maKH = k.maKH WHERE h.maHD = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maHD);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                sb.append("Mã hóa đơn: ").append(rs.getString("maHD")).append("\n");
-                sb.append("Ngày lập:   ").append(sdf.format(rs.getTimestamp("ngayLap"))).append("\n");
-                sb.append("Nhân viên:  ").append(rs.getString("tenNV")).append("\n");
-                sb.append("Khách hàng: ").append(rs.getString("tenKH")).append("\n");
-                sb.append("------------------------------------------\n");
-                sb.append(String.format("%-15s %-10s %12s\n", "Mã Vé", "Loại", "Giá"));
-
-                // 2. Lấy danh sách vé
-                String sqlCT = "SELECT ct.maVe, v.maLoaiVe, ct.donGia FROM ChiTietHoaDon ct " +
-                               "JOIN Ve v ON ct.maVe = v.maVe WHERE ct.maHD = ?";
-                PreparedStatement ps2 = con.prepareStatement(sqlCT);
-                ps2.setString(1, maHD);
-                ResultSet rs2 = ps2.executeQuery();
-                while(rs2.next()) {
-                    sb.append(String.format("%-15s %-10s %12s\n", 
-                        rs2.getString(1), rs2.getString(2), df.format(rs2.getDouble(3))));
+    private JPanel createPanelDanhSachHoaDon() {
+        JPanel pnl = new JPanel(new BorderLayout());
+        pnl.setBorder(new TitledBorder("Lịch sử giao dịch"));
+        String[] cols = {"Mã HD", "Ngày lập", "Thành tiền"};
+        modelHD = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tableHD = new JTable(modelHD);
+        tableHD.setRowHeight(30);
+        tableHD.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int row = tableHD.getSelectedRow();
+                if (row != -1) {
+                    currentMaHD = tableHD.getValueAt(row, 0).toString();
+                    hienThiFullChiTiet(currentMaHD);
                 }
-                sb.append("------------------------------------------\n");
-                sb.append("TỔNG TIỀN THANH TOÁN: ").append(df.format(rs.getDouble("thanhTien"))).append("\n");
-                sb.append("==========================================\n");
             }
-        } catch (Exception e) {
-            sb.append("Lỗi hệ thống: ").append(e.getMessage());
-        }
-
-        area.setText(sb.toString());
-        dlg.add(new JScrollPane(area), BorderLayout.CENTER);
-        
-        JButton btnPrint = new JButton("IN HÓA ĐƠN");
-        btnPrint.addActionListener(e -> {
-            JOptionPane.showMessageDialog(dlg, "Đã in hóa đơn thành công! " + maHD);
-            dlg.dispose();
         });
-        dlg.add(btnPrint, BorderLayout.SOUTH);
-
-        dlg.setVisible(true);
+        pnl.add(new JScrollPane(tableHD), BorderLayout.CENTER);
+        return pnl;
     }
 
-    // Các hàm load data và lọc giữ nguyên như cũ (đảm bảo maNV/maHD đúng SQL)
-    public void loadDuLieuThanhToanMoi(String maHD) {
+    private JPanel createPanelChiTietDayDu() {
+        JPanel pnlMain = new JPanel(new BorderLayout(0, 10));
+        pnlMain.setBackground(Color.WHITE);
+        pnlMain.setBorder(new LineBorder(new Color(200, 200, 200)));
+
+        JPanel pnlHeader = new JPanel(new GridLayout(2, 1));
+        pnlHeader.setBackground(new Color(0, 102, 204));
+        JLabel lblTitle = new JLabel("CHI TIẾT HÓA ĐƠN", JLabel.CENTER);
+        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
+        JLabel lblSub = new JLabel("Ga tàu hỏa Việt Nam", JLabel.CENTER);
+        lblSub.setForeground(Color.WHITE);
+        pnlHeader.add(lblTitle); pnlHeader.add(lblSub);
+        pnlHeader.setPreferredSize(new Dimension(0, 60));
+
+        JPanel pnlInfo = new JPanel(new GridBagLayout());
+        pnlInfo.setBackground(Color.WHITE);
+        pnlInfo.setBorder(new EmptyBorder(15, 20, 15, 20));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        lblMaHDVal = new JLabel("-"); lblMaHDVal.setFont(new Font("SansSerif", Font.BOLD, 13));
+        lblNgayLapVal = new JLabel("-");
+        lblNhanVienVal = new JLabel("-");
+        lblKhachHangVal = new JLabel("-");
+        lblKhuyenMaiVal = new JLabel("-");
+        lblTongTienVal = new JLabel("0 VNĐ");
+        lblTongTienVal.setFont(new Font("SansSerif", Font.BOLD, 18));
+        lblTongTienVal.setForeground(new Color(220, 53, 69));
+
+        addInfoRow(pnlInfo, "Mã hóa đơn:", lblMaHDVal, 0, gbc);
+        addInfoRow(pnlInfo, "Ngày lập:", lblNgayLapVal, 1, gbc);
+        addInfoRow(pnlInfo, "Nhân viên:", lblNhanVienVal, 2, gbc);
+        addInfoRow(pnlInfo, "Khách hàng:", lblKhachHangVal, 3, gbc);
+        addInfoRow(pnlInfo, "Khuyến mãi:", lblKhuyenMaiVal, 4, gbc);
+
+        String[] cols = {"Mã Vé", "Loại Vé", "Đơn Giá"};
+        modelCT = new DefaultTableModel(cols, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
+        tableCT = new JTable(modelCT);
+        tableCT.setRowHeight(25);
+        JScrollPane scrollTable = new JScrollPane(tableCT);
+        scrollTable.setBorder(new TitledBorder("Danh sách vé"));
+
+        JPanel pnlBottom = new JPanel(new BorderLayout());
+        pnlBottom.setBackground(Color.WHITE);
+        pnlBottom.setBorder(new EmptyBorder(10, 20, 10, 20));
+
+        JPanel pnlTotal = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pnlTotal.setBackground(Color.WHITE);
+        pnlTotal.add(new JLabel("TỔNG THANH TOÁN: "));
+        pnlTotal.add(lblTongTienVal);
+
+        JButton btnPDF = new JButton("XUẤT HÓA ĐƠN (PDF)");
+        btnPDF.setBackground(new Color(40, 167, 69));
+        btnPDF.setForeground(Color.WHITE);
+        btnPDF.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnPDF.setPreferredSize(new Dimension(0, 40));
+        btnPDF.addActionListener(e -> xuatHoaDonPDF(currentMaHD));
+
+        pnlBottom.add(pnlTotal, BorderLayout.NORTH);
+        pnlBottom.add(btnPDF, BorderLayout.SOUTH);
+
+        pnlMain.add(pnlHeader, BorderLayout.NORTH);
+        JPanel pnlCenter = new JPanel(new BorderLayout());
+        pnlCenter.add(pnlInfo, BorderLayout.NORTH);
+        pnlCenter.add(scrollTable, BorderLayout.CENTER);
+        pnlMain.add(pnlCenter, BorderLayout.CENTER);
+        pnlMain.add(pnlBottom, BorderLayout.SOUTH);
+
+        return pnlMain;
+    }
+
+    private void addInfoRow(JPanel pnl, String label, JLabel valLabel, int row, GridBagConstraints gbc) {
+        gbc.gridy = row; gbc.gridx = 0; gbc.weightx = 0.1;
+        JLabel l = new JLabel(label); l.setForeground(Color.GRAY);
+        pnl.add(l, gbc);
+        gbc.gridx = 1; gbc.weightx = 0.9;
+        pnl.add(valLabel, gbc);
+    }
+
+    private void hienThiFullChiTiet(String maHD) {
+        modelCT.setRowCount(0);
         try (Connection con = ConnectDB.getConnection()) {
-            String sql = "SELECT h.maHD, k.tenKH, h.thanhTien FROM HoaDon h JOIN KhachHang k ON h.maKH = k.maKH WHERE h.maHD = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
+            String sqlHD = "SELECT h.*, n.tenNV, k.tenKH, km.tenKM FROM HoaDon h " +
+                           "LEFT JOIN NhanVien n ON h.maNV = n.maNV " +
+                           "LEFT JOIN KhachHang k ON h.maKH = k.maKH " +
+                           "LEFT JOIN KhuyenMai km ON h.maKM = km.maKM WHERE h.maHD = ?";
+            PreparedStatement ps = con.prepareStatement(sqlHD);
             ps.setString(1, maHD);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                txtMaHDMoi.setText(rs.getString(1));
-                txtTenKHMoi.setText(rs.getString(2));
-                txtTongTienMoi.setText(df.format(rs.getDouble(3)));
-                btnXacNhan.setEnabled(true);
-                
-                modelVeChoThanhToan.setRowCount(0);
-                PreparedStatement ps2 = con.prepareStatement("SELECT maVe, 'Vé Tàu', donGia FROM ChiTietHoaDon WHERE maHD = ?");
-                ps2.setString(1, maHD);
-                ResultSet rs2 = ps2.executeQuery();
-                while(rs2.next()) modelVeChoThanhToan.addRow(new Object[]{rs2.getString(1), rs2.getString(2), df.format(rs2.getDouble(3))});
+                lblMaHDVal.setText(rs.getString("maHD"));
+                lblNgayLapVal.setText(sdf.format(rs.getTimestamp("ngayLap")));
+                lblNhanVienVal.setText(rs.getString("tenNV"));
+                lblKhachHangVal.setText(rs.getString("tenKH"));
+                lblKhuyenMaiVal.setText(rs.getString("tenKM") != null ? rs.getString("tenKM") : "Không có");
+                lblTongTienVal.setText(df.format(rs.getDouble("thanhTien")));
+            }
+            String sqlCT = "SELECT ct.maVe, v.maLoaiVe, ct.donGia FROM ChiTietHoaDon ct " +
+                           "JOIN Ve v ON ct.maVe = v.maVe WHERE ct.maHD = ?";
+            PreparedStatement ps2 = con.prepareStatement(sqlCT);
+            ps2.setString(1, maHD);
+            ResultSet rs2 = ps2.executeQuery();
+            while (rs2.next()) {
+                modelCT.addRow(new Object[]{ rs2.getString(1), rs2.getString(2), df.format(rs2.getDouble(3)) });
             }
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void thanhToanThanhCong() {
-        JOptionPane.showMessageDialog(this, "Thanh toán hoàn tất!");
-        btnXacNhan.setEnabled(false);
-        txtMaHDMoi.setText("");
-        modelVeChoThanhToan.setRowCount(0);
-        locLichSu();
+    private void xuatHoaDonPDF(String maHD) {
+        if (maHD == null || maHD.isEmpty() || maHD.equals("-")) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một hóa đơn từ danh sách!");
+            return;
+        }
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu file PDF");
+        fileChooser.setSelectedFile(new java.io.File("HoaDon_" + maHD + ".pdf"));
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String path = fileChooser.getSelectedFile().getAbsolutePath();
+            Document document = new Document();
+            try {
+                PdfWriter.getInstance(document, new FileOutputStream(path));
+                document.open();
+                com.itextpdf.text.Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+                Paragraph title = new Paragraph("HOA DON THANH TOAN GA TAU", boldFont);
+                title.setAlignment(Element.ALIGN_CENTER);
+                document.add(title);
+                document.add(new Paragraph(" "));
+                document.add(new Paragraph("Ma HD: " + lblMaHDVal.getText()));
+                document.add(new Paragraph("Ngay lap: " + lblNgayLapVal.getText()));
+                document.add(new Paragraph("Khach hang: " + lblKhachHangVal.getText()));
+                document.add(new Paragraph("Nhan vien: " + lblNhanVienVal.getText()));
+                document.add(new Paragraph(" "));
+                PdfPTable pdfTable = new PdfPTable(3);
+                pdfTable.setWidthPercentage(100);
+                pdfTable.addCell("Ma Ve"); pdfTable.addCell("Loai Ve"); pdfTable.addCell("Don Gia");
+                for (int i = 0; i < modelCT.getRowCount(); i++) {
+                    pdfTable.addCell(modelCT.getValueAt(i, 0).toString());
+                    pdfTable.addCell(modelCT.getValueAt(i, 1).toString());
+                    pdfTable.addCell(modelCT.getValueAt(i, 2).toString());
+                }
+                document.add(pdfTable);
+                Paragraph total = new Paragraph("\nTONG THANH TOAN: " + lblTongTienVal.getText(), boldFont);
+                total.setAlignment(Element.ALIGN_RIGHT);
+                document.add(total);
+                document.close();
+                JOptionPane.showMessageDialog(this, "Đã xuất PDF thành công!");
+                Desktop.getDesktop().open(new java.io.File(path));
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+    }
+
+    private void loadDauSachHoaDon() {
+        modelHD.setRowCount(0);
+        StringBuilder sql = new StringBuilder("SELECT maHD, ngayLap, thanhTien FROM HoaDon WHERE 1=1 ");
+        try (Connection con = ConnectDB.getConnection()) {
+            if (!txtTimKiemMaHD.getText().trim().isEmpty()) sql.append(" AND maHD LIKE ? ");
+            if (cbNhanVienLoc.getSelectedItem() instanceof NhanVienItem) sql.append(" AND maNV = ? ");
+            if (dateLoc.getDate() != null) sql.append(" AND CAST(ngayLap AS DATE) = ? ");
+            sql.append(" ORDER BY ngayLap DESC");
+            PreparedStatement ps = con.prepareStatement(sql.toString());
+            int idx = 1;
+            if (!txtTimKiemMaHD.getText().trim().isEmpty()) ps.setString(idx++, "%" + txtTimKiemMaHD.getText().trim() + "%");
+            if (cbNhanVienLoc.getSelectedItem() instanceof NhanVienItem) ps.setString(idx++, ((NhanVienItem) cbNhanVienLoc.getSelectedItem()).getMaNV());
+            if (dateLoc.getDate() != null) ps.setDate(idx++, new java.sql.Date(dateLoc.getDate().getTime()));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                modelHD.addRow(new Object[]{ rs.getString(1), sdf.format(rs.getTimestamp(2)), df.format(rs.getDouble(3)) });
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void loadNhanVienToCombo() {
-        cbNhanVienLoc.addItem("Tất cả");
+        cbNhanVienLoc.addItem("--- Tất cả ---");
         try (Connection con = ConnectDB.getConnection()) {
             ResultSet rs = con.createStatement().executeQuery("SELECT maNV, tenNV FROM NhanVien");
             while (rs.next()) cbNhanVienLoc.addItem(new NhanVienItem(rs.getString(1), rs.getString(2)));
         } catch (Exception e) {}
-    }
-
-    private void locLichSu() {
-        if (modelLichSu == null) return;
-        modelLichSu.setRowCount(0);
-        
-        try (Connection con = ConnectDB.getConnection()) {
-            // 1. Khởi tạo câu SQL cơ bản
-            StringBuilder sql = new StringBuilder("SELECT maHD, ngayLap, thanhTien FROM HoaDon WHERE 1=1 ");
-            
-            // 2. Kiểm tra lọc theo Mã HD (Search box)
-            if (!txtTimKiemMaHD.getText().trim().isEmpty()) {
-                sql.append(" AND maHD LIKE ? ");
-            }
-            
-            // 3. Kiểm tra lọc theo Nhân viên (ComboBox)
-            Object selectedNV = cbNhanVienLoc.getSelectedItem();
-            if (selectedNV instanceof NhanVienItem) {
-                sql.append(" AND maNV = ? ");
-            }
-            
-            // 4. Kiểm tra lọc theo Ngày lập (JDateChooser)
-            if (dateLoc.getDate() != null) {
-                sql.append(" AND CAST(ngayLap AS DATE) = ? ");
-            }
-            
-            sql.append(" ORDER BY ngayLap DESC");
-
-            PreparedStatement ps = con.prepareStatement(sql.toString());
-            int paramIndex = 1;
-
-            // 5. Gán giá trị cho các tham số theo đúng thứ tự
-            if (!txtTimKiemMaHD.getText().trim().isEmpty()) {
-                ps.setString(paramIndex++, "%" + txtTimKiemMaHD.getText().trim() + "%");
-            }
-            
-            if (selectedNV instanceof NhanVienItem) {
-                ps.setString(paramIndex++, ((NhanVienItem) selectedNV).getMaNV()); // Đảm bảo class NhanVienItem có hàm getMaNV()
-            }
-            
-            if (dateLoc.getDate() != null) {
-                // Chuyển đổi từ java.util.Date sang java.sql.Date
-                ps.setDate(paramIndex++, new java.sql.Date(dateLoc.getDate().getTime()));
-            }
-
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                modelLichSu.addRow(new Object[]{
-                    rs.getString("maHD"), 
-                    sdf.format(rs.getTimestamp("ngayLap")), 
-                    df.format(rs.getDouble("thanhTien"))
-                });
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi khi lọc dữ liệu: " + e.getMessage());
-        }
     }
 }
