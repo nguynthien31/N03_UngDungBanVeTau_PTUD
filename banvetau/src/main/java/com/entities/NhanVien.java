@@ -1,77 +1,84 @@
 package com.entities;
 
+import com.enums.ChucVu;
 import com.enums.TrangThaiNhanVien;
 
+import java.util.Date;
+
 public class NhanVien {
-	private String maNV;
-	private String tenNV;
-	private String chucVu;
-	private String matKhau;
-	private TrangThaiNhanVien trangThaiNV;
+    private String maNV;
+    private String tenNV;
+    private String sdt;
+    private String email;
+    private String taiKhoan;
+    private String matKhau;
+    private ChucVu chucVu;
+    private TrangThaiNhanVien trangThai;
+    private Date ngayVaoLam;
 
-	public String getMaNV() {
-		return maNV;
-	}
+    public NhanVien() {}
 
-	public void setMaNV(String maNV) {
-		this.maNV = maNV;
-	}
+    public NhanVien(String maNV, String tenNV, String sdt, String email, String taiKhoan, String matKhau, ChucVu chucVu, TrangThaiNhanVien trangThai, Date ngayVaoLam) {
+        this.maNV = maNV;
+        this.tenNV = tenNV;
+        this.sdt = sdt;
+        this.email = email;
+        this.taiKhoan = taiKhoan;
+        this.matKhau = matKhau;
+        this.chucVu = chucVu;
+        this.trangThai = trangThai;
+        this.ngayVaoLam = ngayVaoLam;
+    }
 
-	public String getTenNV() {
-		return tenNV;
-	}
+    // Getter - Setter
+    public String getMaNV() { return maNV; }
+    public void setMaNV(String maNV) { this.maNV = maNV; }
 
-	public void setTenNV(String tenNV) {
-		this.tenNV = tenNV;
-	}
+    public String getTenNV() { return tenNV; }
+    public void setTenNV(String tenNV) { this.tenNV = tenNV; }
 
-	public NhanVien(String maNV, String tenNV) {
-		super();
-		this.maNV = maNV;
-		this.tenNV = tenNV;
-	}
+    public String getMatKhau() { return matKhau; }
+    public void setMatKhau(String matKhau) { this.matKhau = matKhau; }
 
-	public String getChucVu() {
-		return chucVu;
-	}
+    public ChucVu getChucVu() {
+        return chucVu;
+    }
 
-	public void setChucVu(String chucVu) {
-		this.chucVu = chucVu;
-	}
+    public void setChucVu(ChucVu chucVu) {
+        this.chucVu = chucVu;
+    }
 
-	public String getMatKhau() {
-		return matKhau;
-	}
+    public TrangThaiNhanVien getTrangThai() {
+        return trangThai;
+    }
 
-	public void setMatKhau(String matKhau) {
-		this.matKhau = matKhau;
-	}
+    public void setTrangThai(TrangThaiNhanVien trangThai) {
+        this.trangThai = trangThai;
+    }
 
-	public TrangThaiNhanVien getTrangThaiNV() {
-		return trangThaiNV;
-	}
+    public Date getNgayVaoLam() { return ngayVaoLam; }
+    public void setNgayVaoLam(Date ngayVaoLam) { this.ngayVaoLam = ngayVaoLam; }
 
-	public void setTrangThaiNV(TrangThaiNhanVien trangThaiNV) {
-		this.trangThaiNV = trangThaiNV;
-	}
+    public String getSdt() {
+        return sdt;
+    }
+    public void setSdt(String sdt) {
+        this.sdt = sdt;
+    }
 
-	public NhanVien() {
-		super();
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public NhanVien(String maNV, String tenNV, String chucVu, String matKhau, TrangThaiNhanVien trangThaiNV) {
-		super();
-		this.maNV = maNV;
-		this.tenNV = tenNV;
-		this.chucVu = chucVu;
-		this.matKhau = matKhau;
-		this.trangThaiNV = trangThaiNV;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	@Override
-	public String toString() {
-		return "NhanVien [maNV=" + maNV + ", tenNV=" + tenNV + ", chucVu=" + chucVu + ", matKhau=" + matKhau
-				+ ", trangThaiNV=" + trangThaiNV + "]";
-	}
+    public String getTaiKhoan() {
+        return taiKhoan;
+    }
 
+    public void setTaiKhoan(String taiKhoan) {
+        this.taiKhoan = taiKhoan;
+    }
 }

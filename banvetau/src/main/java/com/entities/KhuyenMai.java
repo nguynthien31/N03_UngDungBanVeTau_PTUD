@@ -1,95 +1,72 @@
 package com.entities;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 public class KhuyenMai {
-	private String maKM;
-	private String tenKM;
-	private double tyLeGiam; // Ví dụ: 0.1 tương ứng với giảm 10%
-	private LocalDate ngayBatDau;
-	private LocalDate ngayKetThuc;
-	private String moTa;
+    private String maKM;
+    private String tenKM;
+    private Date ngayBatDau;
+    private Date ngayKetThuc;
+    private boolean trangThai;
+    private String moTa;
 
-	// Constructor đầy đủ tham số
-	public KhuyenMai(String maKM, String tenKM, double tyLeGiam, LocalDate ngayBatDau, LocalDate ngayKetThuc,
-			String moTa) {
-		this.maKM = maKM;
-		this.tenKM = tenKM;
-		this.tyLeGiam = tyLeGiam;
-		this.ngayBatDau = ngayBatDau;
-		this.ngayKetThuc = ngayKetThuc;
-		this.moTa = moTa;
-	}
+    public KhuyenMai() {}
 
-	// Constructor mặc định
-	public KhuyenMai() {
-	}
+    public KhuyenMai(String maKM, String tenKM, Date ngayBatDau, Date ngayKetThuc, boolean trangThai, String moTa) {
+        this.maKM = maKM;
+        this.tenKM = tenKM;
+        this.ngayBatDau = ngayBatDau;
+        this.ngayKetThuc = ngayKetThuc;
+        this.trangThai = trangThai;
+        this.moTa = moTa;
+    }
 
-	// Constructor với mã (dùng để truy vấn nhanh)
-	public KhuyenMai(String maKM) {
-		this.maKM = maKM;
-	}
+    public String getMaKM() {
+        return maKM;
+    }
 
-	// Getter và Setter
-	public String getMaKM() {
-		return maKM;
-	}
+    public void setMaKM(String maKM) {
+        this.maKM = maKM;
+    }
 
-	public void setMaKM(String maKM) {
-		this.maKM = maKM;
-	}
+    public String getTenKM() {
+        return tenKM;
+    }
 
-	public String getTenKM() {
-		return tenKM;
-	}
+    public void setTenKM(String tenKM) {
+        this.tenKM = tenKM;
+    }
 
-	public void setTenKM(String tenKM) {
-		this.tenKM = tenKM;
-	}
+    public Date getNgayBatDau() {
+        return ngayBatDau;
+    }
 
-	public double getTyLeGiam() {
-		return tyLeGiam;
-	}
+    public void setNgayBatDau(Date ngayBatDau) {
+        this.ngayBatDau = ngayBatDau;
+    }
 
-	public void setTyLeGiam(double tyLeGiam) {
-		this.tyLeGiam = tyLeGiam;
-	}
+    public Date getNgayKetThuc() {
+        return ngayKetThuc;
+    }
 
-	public LocalDate getNgayBatDau() {
-		return ngayBatDau;
-	}
+    public void setNgayKetThuc(Date ngayKetThuc) {
+        this.ngayKetThuc = ngayKetThuc;
+    }
 
-	public void setNgayBatDau(LocalDate ngayBatDau) {
-		this.ngayBatDau = ngayBatDau;
-	}
+    public boolean isTrangThai() {
+        return trangThai;
+    }
 
-	public LocalDate getNgayKetThuc() {
-		return ngayKetThuc;
-	}
+    public void setTrangThai(boolean trangThai) {
+        this.trangThai = trangThai;
+    }
 
-	public void setNgayKetThuc(LocalDate ngayKetThuc) {
-		this.ngayKetThuc = ngayKetThuc;
-	}
+    public String getMoTa() {
+        return moTa;
+    }
 
-	public String getMoTa() {
-		return moTa;
-	}
-
-	public void setMoTa(String moTa) {
-		this.moTa = moTa;
-	}
-
-	/**
-	 * Kiểm tra xem khuyến mãi có còn hiệu lực ở thời điểm hiện tại hay không
-	 */
-	public boolean isConHieuLuc() {
-		LocalDate nay = LocalDate.now();
-		return (nay.isEqual(ngayBatDau) || nay.isAfter(ngayBatDau))
-				&& (nay.isEqual(ngayKetThuc) || nay.isBefore(ngayKetThuc));
-	}
-
-	@Override
-	public String toString() {
-		return "KhuyenMai [maKM=" + maKM + ", tenKM=" + tenKM + ", tyLeGiam=" + (tyLeGiam * 100) + "%]";
-	}
+    public void setMoTa(String moTa) {
+        this.moTa = moTa;
+    }
 }
