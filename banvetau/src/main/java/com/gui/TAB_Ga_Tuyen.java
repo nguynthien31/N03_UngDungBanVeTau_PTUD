@@ -203,6 +203,8 @@ public class TAB_Ga_Tuyen extends JPanel implements ActionListener {
             };
             dataModel_Ga.addRow(rowData);
         }
+        tableGa.revalidate();
+        tableGa.repaint();
     }
 
     // 1. Đưa dữ liệu vào ComboBox Ga đi và ga đến của Tuyến
@@ -392,14 +394,15 @@ public class TAB_Ga_Tuyen extends JPanel implements ActionListener {
             Tuyen tuyen = reverTuyenFromTextFile();
 
             if(tuyen == null){
-                JOptionPane.showMessageDialog(this, "Dữ liệu bị rỗng");
+                return;
             }
 
-            if(dsTuyen.addTuyen(tuyen)){
+            if (dsTuyen.addTuyen(tuyen)) {
                 JOptionPane.showMessageDialog(this, "Thêm tuyến mới thành công!");
-
+                // Gọi thẳng các hàm cập nhật giao diện, KHÔNG DÙNG THREAD
                 xoaRongFormTuyen();
-            } else{
+                updateComboBox();
+            } else {
                 JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại (Có thể trùng Mã Tuyến).", "Lỗi CSDL", JOptionPane.ERROR_MESSAGE);
             }
 
@@ -490,7 +493,14 @@ public class TAB_Ga_Tuyen extends JPanel implements ActionListener {
             };
             dataModel_Tuyen.addRow(rowData);
         }
-        tableTuyen.setModel(dataModel_Tuyen);
+        
+        // Nếu bảng chưa có model hoặc model khác thì set model
+        if (tableTuyen.getModel() != dataModel_Tuyen) {
+            tableTuyen.setModel(dataModel_Tuyen);
+        }
+        
+        tableTuyen.revalidate(); // Yêu cầu bảng tính toán lại kích thước
+        tableTuyen.repaint();    // Yêu cầu bảng vẽ lại toàn bộ
     }
 
     /**
@@ -658,17 +668,21 @@ public class TAB_Ga_Tuyen extends JPanel implements ActionListener {
             int phutSua = (Integer.parseInt(cbGioSua.getSelectedItem().toString()) * 60)
                     + Integer.parseInt(cbPhutSua.getSelectedItem().toString());
 
-            Ga gaDi = dsGa.getGaByMa(cbGaDiSua.getSelectedItem().toString());
-            Ga gaDen = dsGa.getGaByMa(cbGaDenSua.getSelectedItem().toString());
+            Ga gaDiMoi = dsGa.getGaByMa(cbGaDiSua.getSelectedItem().toString());
+            Ga gaDeNMoi = dsGa.getGaByMa(cbGaDenSua.getSelectedItem().toString());
 
-            String tenTuyenMoi = gaDi.getTenGa() + " - " + gaDen.getTenGa();
+            String tenTuyenMoi = gaDiMoi.getTenGa() + " - " + gaDeNMoi.getTenGa();
 
-            Tuyen tuyenCapNhat = new Tuyen(txtMaSua.getText(), tenTuyenMoi, phutSua, gaDi, gaDen);
+            Tuyen tuyenCapNhat = new Tuyen(txtMaSua.getText(), tenTuyenMoi, phutSua, gaDiMoi, gaDeNMoi);
 
             if (dsTuyen.updateTuyen(tuyenCapNhat)) {
-                JOptionPane.showMessageDialog(dialog, "Cập nhật tuyến thành công!");
-                updateTableData_Tuyen(); // Load lại bảng chính
-                dialog.dispose(); // Đóng popup
+                dialog.dispose();
+
+                SwingUtilities.invokeLater(() -> {
+                    updateTableData_Tuyen();
+                    updateComboBox();
+                    JOptionPane.showMessageDialog(TAB_Ga_Tuyen.this, "Cập nhật tuyến thành công!");
+                });
             } else {
                 JOptionPane.showMessageDialog(dialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -677,6 +691,6 @@ public class TAB_Ga_Tuyen extends JPanel implements ActionListener {
         // Ráp mọi thứ vào Dialog và hiển thị
         dialog.add(formPanel, BorderLayout.CENTER);
         dialog.add(btnPanel, BorderLayout.SOUTH);
-        dialog.setVisible(true); // Lệnh này làm form hiện lên
+        dialog.setVisible(true);
     }
 }

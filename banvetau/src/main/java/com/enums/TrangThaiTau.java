@@ -1,7 +1,9 @@
 package com.enums;
 
 public enum TrangThaiTau {
-	HOATDONG("Đang hoạt động"), BAOTRI("Bảo trì"), NGUNGHOATDONG("Ngưng hoạt động");
+	HOATDONG("Đang hoạt động"),
+	BAOTRI("Bảo trì"),
+	NGUNGHOATDONG("Ngưng hoạt động");
 
 	private final String moTa;
 

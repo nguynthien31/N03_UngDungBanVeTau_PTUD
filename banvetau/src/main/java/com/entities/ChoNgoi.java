@@ -1,59 +1,46 @@
 package com.entities;
 
+import com.enums.TrangThaiCho;
+
 public class ChoNgoi {
-	private String maCho;
-	private String tenCho;
-	private String maToa;
-	private int trangThai; // Or boolean, depending on your DB (0: Empty, 1: Booked)
-
-	// Default Constructor
-	public ChoNgoi() {
-	}
-
-	// Full Constructor
-	public ChoNgoi(String maCho, String tenCho, String maToa, int trangThai) {
+	private String maCho, tenCho;
+	private Toa toa;
+	private TrangThaiCho trangThai;
+	public ChoNgoi(String maCho, String tenCho, Toa toa, TrangThaiCho trangThai) {
+		super();
 		this.maCho = maCho;
 		this.tenCho = tenCho;
-		this.maToa = maToa;
+		this.toa = toa;
 		this.trangThai = trangThai;
 	}
 
-	// Getters and Setters
+	public ChoNgoi() {
+		super();
+	}
+
 	public String getMaCho() {
 		return maCho;
 	}
-
 	public void setMaCho(String maCho) {
 		this.maCho = maCho;
 	}
-
 	public String getTenCho() {
 		return tenCho;
 	}
-
 	public void setTenCho(String tenCho) {
 		this.tenCho = tenCho;
 	}
-
-	public String getMaToa() {
-		return maToa;
+	public Toa getToa() {
+		return toa;
 	}
-
-	public void setMaToa(String maToa) {
-		this.maToa = maToa;
+	public void setToa(Toa toa) {
+		this.toa = toa;
 	}
-
-	public int getTrangThai() {
+	public TrangThaiCho getTrangThai() {
 		return trangThai;
 	}
-
-	public void setTrangThai(int trangThai) {
+	public void setTrangThai(TrangThaiCho trangThai) {
 		this.trangThai = trangThai;
 	}
 
-	@Override
-	public String toString() {
-		return "ChoNgoi{" + "maCho='" + maCho + '\'' + ", tenCho='" + tenCho + '\'' + ", maToa='" + maToa + '\''
-				+ ", trangThai=" + trangThai + '}';
-	}
 }

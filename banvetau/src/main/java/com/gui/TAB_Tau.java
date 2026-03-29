@@ -6,6 +6,7 @@ import com.enums.TrangThaiTau;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -15,204 +16,203 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 
 public class TAB_Tau extends JPanel {
-	// --- Khai báo các thành phần giao diện ---
 	private JTable table;
 	private DefaultTableModel model;
 	private JTextField txtSearch;
-	private JButton btnAdd, btnDelete, btnUpdate, btnRefresh, btnSearch;
+	private JButton btnAdd, btnRefresh, btnSearch;
 
-	// --- Khai báo lớp xử lý dữ liệu ---
-	private DAO_Tau DAO_Tau = new DAO_Tau();
-	private Color primaryColor = new Color(0, 122, 255);
+	// Dashboard Labels
+	private JLabel lblTotal, lblActive, lblMaintenance, lblStopped;
+
+	private DAO_Tau tauDAO = new DAO_Tau();
+
+	// Bảng màu Ocean Blue
+	private final Color COLOR_BG = new Color(248, 250, 252);
+	private final Color COLOR_PRIMARY = new Color(37, 99, 235);
+	private final Color COLOR_BORDER = new Color(226, 232, 240);
+	private final Color COLOR_TEXT_MUTED = new Color(100, 116, 139);
 
 	public TAB_Tau() {
-		setLayout(new BorderLayout(0, 15));
-		setBackground(Color.WHITE);
-		setBorder(new EmptyBorder(20, 20, 20, 20));
+		setLayout(new BorderLayout(0, 20));
+		setBackground(COLOR_BG);
+		setBorder(new EmptyBorder(25, 25, 25, 25));
 
-		initUI(); // Khởi tạo giao diện
-		initEvents(); // Khởi tạo sự kiện
-		loadDataFromDatabase(); // Đổ dữ liệu lần đầu
+		initUI();
+		initEvents();
+		loadDataFromDatabase();
 	}
 
 	private void initUI() {
-		// 1. TOP PANEL (Tiêu đề & Thanh công cụ)
-		JPanel pnlTop = new JPanel(new BorderLayout());
+		// --- 1. TOP: TITLE & DASHBOARD ---
+		JPanel pnlTop = new JPanel(new BorderLayout(0, 20));
 		pnlTop.setOpaque(false);
 
 		JLabel lblTitle = new JLabel("QUẢN LÝ ĐOÀN TÀU");
-		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-		lblTitle.setForeground(primaryColor);
+		lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+		lblTitle.setForeground(new Color(30, 41, 59));
 		pnlTop.add(lblTitle, BorderLayout.NORTH);
 
-		// Thanh công cụ
-		JPanel pnlActions = new JPanel(new BorderLayout(10, 0));
-		pnlActions.setOpaque(false);
-		pnlActions.setBorder(new EmptyBorder(15, 0, 10, 0));
+		JPanel pnlDashboard = new JPanel(new GridLayout(1, 4, 20, 0));
+		pnlDashboard.setOpaque(false);
+		pnlDashboard.add(createStatCard("TỔNG SỐ TÀU", lblTotal = new JLabel("0"), COLOR_PRIMARY));
+		pnlDashboard.add(createStatCard("ĐANG HOẠT ĐỘNG", lblActive = new JLabel("0"), new Color(34, 197, 94)));
+		pnlDashboard.add(createStatCard("ĐANG BẢO TRÌ", lblMaintenance = new JLabel("0"), new Color(245, 158, 11)));
+		pnlDashboard.add(createStatCard("NGƯNG HOẠT ĐỘNG", lblStopped = new JLabel("0"), new Color(239, 68, 68)));
+		pnlTop.add(pnlDashboard, BorderLayout.CENTER);
 
-		// Cụm tìm kiếm bên trái
+		// --- 2. CENTER: TOOLBAR & TABLE ---
+		JPanel pnlCenter = new JPanel(new BorderLayout(0, 15));
+		pnlCenter.setOpaque(false);
+
+		JPanel pnlToolbar = new JPanel(new BorderLayout());
+		pnlToolbar.setOpaque(false);
+
+		// Thanh tìm kiếm bên trái
 		JPanel pnlSearch = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		pnlSearch.setOpaque(false);
-		txtSearch = new JTextField(25);
-		txtSearch.setPreferredSize(new Dimension(0, 35));
-		btnSearch = createStyledButton("Tìm kiếm", primaryColor, true);
+		txtSearch = new JTextField();
+		txtSearch.setPreferredSize(new Dimension(300, 38));
+		btnSearch = createStyledButton("Tìm kiếm", COLOR_PRIMARY, true);
 		pnlSearch.add(txtSearch);
-		pnlSearch.add(Box.createHorizontalStrut(5));
+		pnlSearch.add(Box.createHorizontalStrut(10));
 		pnlSearch.add(btnSearch);
 
-		// Cụm nút bấm bên phải
+		// Nhóm nút bên phải (Chỉ còn Thêm và Làm mới)
 		JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 		pnlButtons.setOpaque(false);
-		btnAdd = createStyledButton("Thêm mới", new Color(40, 167, 69), false);
-		btnDelete = createStyledButton("Xóa", new Color(220, 53, 69), false);
-		btnUpdate = createStyledButton("Cập nhật", new Color(255, 193, 7), false);
-		btnRefresh = createStyledButton("Làm mới", new Color(108, 117, 125), false);
+		btnAdd = createStyledButton("+ Thêm Mới", new Color(34, 197, 94), false);
+		btnRefresh = createStyledButton("Làm Mới", new Color(100, 116, 139), false);
 
 		pnlButtons.add(btnAdd);
-		pnlButtons.add(btnDelete);
-		pnlButtons.add(btnUpdate);
 		pnlButtons.add(btnRefresh);
 
-		pnlActions.add(pnlSearch, BorderLayout.WEST);
-		pnlActions.add(pnlButtons, BorderLayout.EAST);
-		pnlTop.add(pnlActions, BorderLayout.CENTER);
-		add(pnlTop, BorderLayout.NORTH);
+		pnlToolbar.add(pnlSearch, BorderLayout.WEST);
+		pnlToolbar.add(pnlButtons, BorderLayout.EAST);
 
-		// 2. CENTER PANEL (Bảng dữ liệu)
-		String[] columns = { "STT", "Mã Tàu", "Tên Tàu", "Số Toa", "Trạng thái" };
+		// Cấu trúc bảng
+		String[] columns = {"STT", "Mã Tàu", "Tên Tàu", "Số Toa", "Trạng thái"};
 		model = new DefaultTableModel(columns, 0) {
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return false;
-			}
+			@Override public boolean isCellEditable(int r, int c) { return false; }
 		};
 		table = new JTable(model);
 		setupTableAppearance();
 
 		JScrollPane scrollPane = new JScrollPane(table);
-		scrollPane.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
-		add(scrollPane, BorderLayout.CENTER);
+		scrollPane.setBorder(new LineBorder(COLOR_BORDER));
+		scrollPane.getViewport().setBackground(Color.WHITE);
+
+		pnlCenter.add(pnlToolbar, BorderLayout.NORTH);
+		pnlCenter.add(scrollPane, BorderLayout.CENTER);
+
+		add(pnlTop, BorderLayout.NORTH);
+		add(pnlCenter, BorderLayout.CENTER);
+	}
+
+	private void initEvents() {
+		// Tìm kiếm tự động khi gõ
+		txtSearch.addKeyListener(new KeyAdapter() {
+			@Override public void keyReleased(KeyEvent e) { performSearch(); }
+		});
+
+		// Double-click để Cập nhật (Cách duy nhất để sửa/vô hiệu hóa tàu)
+		table.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				if (e.getClickCount() == 2 && table.getSelectedRow() != -1) {
+					openUpdateForm();
+				}
+			}
+		});
+
+		// Sự kiện Thêm mới
+		btnAdd.addActionListener(e -> {
+			Form_Tau form = new Form_Tau((Frame) SwingUtilities.getWindowAncestor(this), "Thêm Tàu Mới");
+			form.setVisible(true);
+			if (form.isConfirmed()) {
+				Tau newTau = form.getEntity();
+				if (tauDAO.getTauByMa(newTau.getMaTau()) != null) {
+					JOptionPane.showMessageDialog(this, "Mã tàu đã tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				if (tauDAO.insertTau(newTau)) {
+					loadDataFromDatabase();
+					JOptionPane.showMessageDialog(this, "Thêm tàu thành công!");
+				}
+			}
+		});
+
+		btnRefresh.addActionListener(e -> { txtSearch.setText(""); loadDataFromDatabase(); });
+		btnSearch.addActionListener(e -> performSearch());
+	}
+
+	private void openUpdateForm() {
+		int row = table.getSelectedRow();
+		String ma = (String) model.getValueAt(row, 1);
+		Tau tauData = tauDAO.getTauByMa(ma);
+
+		if (tauData != null) {
+			Form_Tau form = new Form_Tau((Frame) SwingUtilities.getWindowAncestor(this), "Cập Nhật Tàu");
+			form.setEntity(tauData);
+			form.setVisible(true);
+
+			// Sau khi đóng Form, cập nhật lại bảng dù có bấm xác nhận hay không để đồng bộ trạng thái
+			loadDataFromDatabase();
+		}
+	}
+
+	private void performSearch() {
+		renderTable(tauDAO.searchTau(txtSearch.getText().trim()));
+	}
+
+	private void loadDataFromDatabase() {
+		renderTable(tauDAO.getAllTau());
+	}
+
+	private void renderTable(List<Tau> list) {
+		model.setRowCount(0);
+		int stt = 1, active = 0, maintenance = 0, stopped = 0;
+
+		for (Tau t : list) {
+			model.addRow(new Object[]{
+					stt++, t.getMaTau(), t.getTenTau(), t.getSoToa(), t.getTrangThaiTau().getMoTa()
+			});
+			if (t.getTrangThaiTau() == TrangThaiTau.HOATDONG) active++;
+			else if (t.getTrangThaiTau() == TrangThaiTau.BAOTRI) maintenance++;
+			else stopped++;
+		}
+
+		lblTotal.setText(String.valueOf(list.size()));
+		lblActive.setText(String.valueOf(active));
+		lblMaintenance.setText(String.valueOf(maintenance));
+		lblStopped.setText(String.valueOf(stopped));
+	}
+
+	private JPanel createStatCard(String title, JLabel lblValue, Color accent) {
+		JPanel p = new JPanel(new BorderLayout(5, 5));
+		p.setBackground(new Color(255, 255, 255));
+		p.setBorder(BorderFactory.createCompoundBorder(new LineBorder(COLOR_BORDER, 1, true), new EmptyBorder(15, 20, 15, 20)));
+		JLabel lblT = new JLabel(title);
+		lblT.setForeground(COLOR_TEXT_MUTED);
+		lblT.setFont(new Font("Segoe UI", Font.BOLD, 12));
+		lblValue.setForeground(accent);
+		lblValue.setFont(new Font("Segoe UI", Font.BOLD, 26));
+		p.add(lblT, BorderLayout.NORTH); p.add(lblValue, BorderLayout.CENTER);
+		return p;
 	}
 
 	private void setupTableAppearance() {
 		JTableHeader header = table.getTableHeader();
 		header.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		header.setBackground(new Color(245, 245, 245));
-		header.setPreferredSize(new Dimension(0, 40));
-
-		table.setRowHeight(35);
-		table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-		table.setSelectionBackground(new Color(230, 240, 255));
-		table.setSelectionForeground(Color.BLACK);
-
-		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-		for (int i = 0; i < table.getColumnCount(); i++) {
-			table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-		}
-	}
-
-	private void initEvents() {
-		// --- THÊM MỚI ---
-		btnAdd.addActionListener(e -> {
-			Form_Tau form = new Form_Tau((Frame) SwingUtilities.getWindowAncestor(this), "Thêm Tàu Mới");
-			form.setVisible(true);
-			if (form.isConfirmed()) {
-				if (DAO_Tau.insertTau(form.getEntity())) {
-					loadDataFromDatabase();
-					JOptionPane.showMessageDialog(this, "Thêm thành công!");
-				} else {
-					JOptionPane.showMessageDialog(this, "Lỗi: Mã tàu trùng hoặc sai định dạng!", "Lỗi",
-							JOptionPane.ERROR_MESSAGE);
-				}
-			}
-		});
-
-		// --- CẬP NHẬT ---
-		btnUpdate.addActionListener(e -> {
-			int row = table.getSelectedRow();
-			if (row == -1) {
-				JOptionPane.showMessageDialog(this, "Vui lòng chọn tàu cần sửa!");
-				return;
-			}
-			String ma = table.getValueAt(row, 1).toString();
-			String ten = table.getValueAt(row, 2).toString();
-			int soToa = Integer.parseInt(table.getValueAt(row, 3).toString());
-			String moTa = table.getValueAt(row, 4).toString();
-
-			TrangThaiTau tt = TrangThaiTau.HOATDONG;
-			for (TrangThaiTau t : TrangThaiTau.values()) {
-				if (t.getMoTa().equals(moTa)) {
-					tt = t;
-					break;
-				}
-			}
-
-			Form_Tau form = new Form_Tau((Frame) SwingUtilities.getWindowAncestor(this), "Cập Nhật Tàu");
-			form.setEntity(new Tau(ma, ten, soToa, tt));
-			form.setVisible(true);
-
-			if (form.isConfirmed()) {
-				if (DAO_Tau.updateTau(form.getEntity())) {
-					loadDataFromDatabase();
-					JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-				}
-			}
-		});
-
-		// --- XÓA ---
-		btnDelete.addActionListener(e -> {
-			int row = table.getSelectedRow();
-			if (row == -1) {
-				JOptionPane.showMessageDialog(this, "Chọn tàu để xóa!");
-				return;
-			}
-			String ma = table.getValueAt(row, 1).toString();
-			if (JOptionPane.showConfirmDialog(this, "Xóa tàu " + ma + "?", "Xác nhận",
-					JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-				if (DAO_Tau.deleteTau(ma)) {
-					loadDataFromDatabase();
-					JOptionPane.showMessageDialog(this, "Đã xóa!");
-				} else {
-					JOptionPane.showMessageDialog(this, "Không thể xóa do ràng buộc dữ liệu!", "Lỗi",
-							JOptionPane.ERROR_MESSAGE);
-				}
-			}
-		});
-
-		// --- LÀM MỚI ---
-		btnRefresh.addActionListener(e -> {
-			txtSearch.setText("");
-			loadDataFromDatabase();
-		});
-
-		// --- TÌM KIẾM ---
-		btnSearch.addActionListener(e -> performSearch());
-		txtSearch.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyReleased(KeyEvent e) {
-				performSearch();
-			}
-		});
-	}
-
-	private void performSearch() {
-		String key = txtSearch.getText().trim();
-		List<Tau> list = DAO_Tau.searchTau(key);
-		renderTable(list);
-	}
-
-	private void loadDataFromDatabase() {
-		renderTable(DAO_Tau.getAllTau());
-	}
-
-	private void renderTable(List<Tau> list) {
-		model.setRowCount(0);
-		int stt = 1;
-		for (Tau t : list) {
-			model.addRow(
-					new Object[] { stt++, t.getMaTau(), t.getTenTau(), t.getSoToa(), t.getTrangThaiTau().getMoTa() });
-		}
+		header.setBackground(Color.WHITE);
+		header.setPreferredSize(new Dimension(0, 45));
+		table.setRowHeight(45);
+		table.setSelectionBackground(new Color(239, 246, 255));
+		table.setSelectionForeground(COLOR_PRIMARY);
+		DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+		center.setHorizontalAlignment(JLabel.CENTER);
+		table.getColumnModel().getColumn(0).setCellRenderer(center);
+		table.getColumnModel().getColumn(3).setCellRenderer(center);
+		table.getColumnModel().getColumn(4).setCellRenderer(center);
 	}
 
 	private JButton createStyledButton(String text, Color color, boolean isSmall) {
@@ -221,7 +221,7 @@ public class TAB_Tau extends JPanel {
 		btn.setBackground(color);
 		btn.setForeground(Color.WHITE);
 		btn.setFocusPainted(false);
-		btn.setPreferredSize(new Dimension(isSmall ? 100 : 110, 35));
+		btn.setPreferredSize(new Dimension(isSmall ? 100 : 120, 38));
 		btn.setBorder(BorderFactory.createEmptyBorder());
 		btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		return btn;

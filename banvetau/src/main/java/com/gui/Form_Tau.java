@@ -41,8 +41,7 @@ public class Form_Tau extends JDialog {
 		// Hiển thị tiếng Việt trong ComboBox
 		cbTrangThai.setRenderer(new DefaultListCellRenderer() {
 			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-					boolean cellHasFocus) {
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				if (value instanceof TrangThaiTau) {
 					setText(((TrangThaiTau) value).getMoTa());
@@ -98,11 +97,13 @@ public class Form_Tau extends JDialog {
 
 	// Lấy dữ liệu ra
 	public Tau getEntity() {
-		return new Tau(txtMa.getText(), txtTen.getText(), Integer.parseInt(txtSoToa.getText()),
-				(TrangThaiTau) cbTrangThai.getSelectedItem());
+		return new Tau(
+				txtMa.getText(),
+				txtTen.getText(),
+				Integer.parseInt(txtSoToa.getText()),
+				(TrangThaiTau) cbTrangThai.getSelectedItem()
+		);
 	}
 
-	public boolean isConfirmed() {
-		return confirmed;
-	}
+	public boolean isConfirmed() { return confirmed; }
 }
