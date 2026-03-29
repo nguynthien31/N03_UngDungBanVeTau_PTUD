@@ -79,7 +79,7 @@ public class GUI_General extends JPanel {
 
 	private void addTabButtons(JPanel sidebar, NhanVien nv) {
 		// Kiểm tra chức vụ (phân biệt Quản lý và Nhân viên)
-		String chucVu = (nv.getChucVu() != null) ? nv.getChucVu().trim().toLowerCase() : "";
+		String chucVu = (nv.getChucVu() != null) ? nv.getChucVu().toString().trim().toLowerCase() : "";
 		boolean isAdmin = chucVu.contains("quản lý") || chucVu.contains("admin");
 
 		// CHỨC NĂNG CHÍNH - Cả 2 đều có quyền
@@ -236,7 +236,7 @@ public class GUI_General extends JPanel {
 		lblName.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		lblName.setForeground(Color.WHITE);
 
-		JLabel lblRole = new JLabel(nv.getChucVu());
+		JLabel lblRole = new JLabel(nv.getChucVu().toString());
 		lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		lblRole.setForeground(new Color(220, 230, 255));
 
