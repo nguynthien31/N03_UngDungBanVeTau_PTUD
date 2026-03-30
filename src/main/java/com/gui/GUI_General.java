@@ -1,10 +1,12 @@
 package com.gui;
 
-import javax.swing.*;
-import com.entities.HoaDon;
 import com.entities.NhanVien;
+import com.enums.ChucVu;
+
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class GUI_General extends JPanel {
 	// Khai báo các Tab
@@ -79,8 +81,7 @@ public class GUI_General extends JPanel {
 
 	private void addTabButtons(JPanel sidebar, NhanVien nv) {
 		// Kiểm tra chức vụ (phân biệt Quản lý và Nhân viên)
-		String chucVu = (nv.getChucVu() != null) ? nv.getChucVu().toString().trim().toLowerCase() : "";
-		boolean isAdmin = chucVu.contains("quản lý") || chucVu.contains("admin");
+        boolean isAdmin = nv.getChucVu() == ChucVu.QUANLY || nv.getChucVu() == ChucVu.ADMIN;
 
 		// CHỨC NĂNG CHÍNH - Cả 2 đều có quyền
 		sidebar.add(createSideTitle("CHỨC NĂNG CHÍNH"));
@@ -236,7 +237,7 @@ public class GUI_General extends JPanel {
 		lblName.setFont(new Font("Segoe UI", Font.BOLD, 18));
 		lblName.setForeground(Color.WHITE);
 
-		JLabel lblRole = new JLabel(nv.getChucVu().toString());
+		JLabel lblRole = new JLabel(nv.getChucVu().getLabel());
 		lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 		lblRole.setForeground(new Color(220, 230, 255));
 
