@@ -12,7 +12,7 @@ public class NhanVien {
     private String email;
     private String taiKhoan;
     private String matKhau;
-    private ChucVu chucVu;
+    private String chucVu;
     private TrangThaiNhanVien trangThai;
     private Date ngayVaoLam;
 
@@ -40,11 +40,11 @@ public class NhanVien {
     public String getMatKhau() { return matKhau; }
     public void setMatKhau(String matKhau) { this.matKhau = matKhau; }
 
-    public ChucVu getChucVu() {
+    public String getChucVu() {
         return chucVu;
     }
 
-    public void setChucVu(ChucVu chucVu) {
+    public void setChucVu(String chucVu) {
         this.chucVu = chucVu;
     }
 
